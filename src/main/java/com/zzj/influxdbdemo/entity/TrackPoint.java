@@ -1,5 +1,6 @@
 package com.zzj.influxdbdemo.entity;
 
+import com.alibaba.fastjson.JSON;
 import lombok.Data;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
@@ -14,7 +15,7 @@ import org.influxdb.annotation.Measurement;
 @Measurement(name = "trackpoint")
 public class TrackPoint {
     @Column(name = "time")
-    private long time;
+    private String time;
 
     @Column(name = "cpuid",tag = true)
     private String cpuid;
@@ -30,4 +31,9 @@ public class TrackPoint {
 
     @Column(name = "state")
     private String state;
+
+    @Override
+    public String toString(){
+        return JSON.toJSONString(this);
+    }
 }
