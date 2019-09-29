@@ -1,0 +1,12 @@
+spring:
+  #此处填写配置后，不需要在JAVA代码中再次进行配置,可以直接注入InfluxDB
+  influx:
+    #端口在/etc/influxdb/influxdb.conf的[http]中配置
+    #此处需要[http://]否则会报错【Factory method 'influxDb' threw exception; nested exception is java.lang.IllegalArgumentException: Unable to parse url: 192.168.86.101:8086】
+    url: http://192.168.86.101:8086
+    user: admin
+    password: admin
+  application:
+    name: influxdb-demo
+server:
+  port: 18044

@@ -1,0 +1,119 @@
+https://www.cnblogs.com/morgana/p/8874673.html
+https://www.jianshu.com/p/4e219bc2f1bf
+https://www.cnblogs.com/senlinyang/p/8580877.html
+https://jasper-zhang1.gitbooks.io/influxdb/content/Introduction/getting_start.html
+创建数据库
+create database testdb
+查看数据库
+show databases
+
+# 创建管理员用户    CREATE USER ... 一定要大写，否则会不识别
+CREATE USER admin WITH PASSWORD 'admin' WITH ALL PRIVILEGES
+
+#创建普通用户并且授权
+CREATE USER test WITH PASSWORD 'test'
+GRANT READ ON testdb to test
+GRANT WRITE ON testdb to test
+
+
+#使用用户名密码登录
+此时 vim /etc/influxdb/influxdb.conf
+找到[http] 选项 把auth-enabled设置成true
+然后 systemctl restart influxdb 重启
+
+此时执行 influx 登录shell客户端
+show databases 发现没有权限，于是exit退出
+使用influx -username admin -password 'admin'  进行登录后 查询show databases ，正常
+
+或者先influx 进入shell  然后使用
+auth admin admin 进行登录
+
+
+influxdb shell语法
+
+
+-- 创建数据库，默认设置
+CREATE DATABASE "testdb"
+-- 创建数据库，使用自定义 Retention Policy
+DURATION为数据存储时长，下面的1d即只存1天的数据；
+REPLICATION为数据副本，一般在使用集群的时候才会设置为>1；
+SHARD DURATION为分区间隔，InfluxDB默认对数据分区，下面的30m即对数据每隔30分钟做一个新的分区；
+Name是Retention Policy的名字。
+CREATE DATABASE "testdb" WITH DURATION 1d REPLICATION 1 SHARD DURATION 30m NAME "myrp"
+-- 可以单独创建Retention Policy，加在已经创建的DB上
+CREATE RETENTION POLICY "Alone RP" ON "testdb" DURATION 60m REPLICATION 2 SHARD DURATION 30m
+
+
+-- 创建一个管理员用户
+CREATE USER "admin" WITH PASSWORD 'admin' WITH ALL PRIVILEGES
+-- 创建一个普通用户
+CREATE USER "test" WITH PASSWORD 'test'
+-- 为用户授权读权限
+GRANT READ ON [testdb] to "test"
+-- 为用户授权写权限
+GRANT WRITE ON [testdb] to "test"
+
+-- 查询所有数据库
+> show databases;
+name: databases
+name
+----
+_internal
+testdb
+
+-- 查询testdb数据库下所有的表(measurements)
+> use testdb;
+Using database testdb
+> show measurements;
+name: measurements
+name
+----
+flyrecord
+
+
+-- 删除testdb数据库下的表flyrecord
+> use testdb;
+Using database testdb
+> drop measurement flyrecord;
+> select * from flyrecord ;  //查询不到了
+>
+
+
+--写入数据
+表名(measurements) flyrecord
+索引(tag) cpuid的值是edae-fsdw-1111
+内容(field) [lat=123.112343] 和 [lon=31.223412]
+insert flyrecord,cpuid=edae-fsdw-1111 lat=123.112343,lon=31.223412
+说明：insert 之后的第一个字段flyrecord是表名，表名逗号后面的内容是索引的key和value，这里使用的是cpuid=edae-fsdw-1111
+然后在索引后面 加上一个空格 就可以写具体的字段内容了，可以是一个 也可以是多个，多个field之前使用逗号隔开。
+tag索引也可以是多个，是用逗号隔开
+--查询数据
+> select * from flyrecord
+name: flyrecord
+time                cpuid          lat        lon       power value
+----                -----          ---        ---       ----- -----
+1569756936608570350 edae-fs41-4444                            1
+1569756957909065782 edae-fs41-4444                            2
+1569756960934153730 edae-fs41-4444                            3
+1569757053634546984 edae-fsdw-1111 123.112343 31.223412
+1569757550151189402 edae-fsdw-1111 111.112343 12.001234 100
+1569757556933183820 edae-fsdw-1111 111.112343 12.001234 99
+1569757559758538579 edae-fsdw-1111 111.112343 12.001234 60
+> select * from flyrecord ORDER BY time desc LIMIT 2
+name: flyrecord
+time                cpuid          lat        lon       power value
+----                -----          ---        ---       ----- -----
+1569757668226541325 222            111.112343 12.001234 60
+1569757559758538579 edae-fsdw-1111 111.112343 12.001234 60
+
+
+-- 清空表数据
+> select * from flyrecord
+name: flyrecord
+time                cpuid cputype lat lon power
+----                ----- ------- --- --- -----
+1569768669249942553 111   H       1.1 2.2 99
+
+> delete from flyrecord //清空表数据
+> select * from flyrecord
+>
