@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/influx")
 public class InfluxDBController {
@@ -33,7 +35,13 @@ public class InfluxDBController {
         Query query = new Query(sql,"testdb");
         influxDB.setLogLevel(InfluxDB.LogLevel.BASIC);
         QueryResult queryResult = influxDB.query(query);
-
+        List<QueryResult.Result> resultList =  queryResult.getResults();
+        for(QueryResult.Result result:resultList){
+            List<QueryResult.Series> seriesList = result.getSeries();
+            for(QueryResult.Series series : seriesList){
+                //go home
+            }
+        }
 
         InfluxDBConfig config = new InfluxDBConfig(userName,password,url,"testdb");
         InfluxDB dbConfig = config.getInfluxDB();
