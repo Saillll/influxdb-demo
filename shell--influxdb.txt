@@ -117,3 +117,22 @@ time                cpuid cputype lat lon power
 > delete from flyrecord //清空表数据
 > select * from flyrecord
 >
+//UTC时间格式转换
+Timestamp format
+Everything in InfluxDB is stored and reported in UTC. By default, timestamps are returned in RFC3339 UTC and have nanosecond precision, for example 2015-08-04T19:05:14.318570484Z.
+If you want timestamps in Unix epoch format include in your request the query string parameter epoch where epoch=[h,m,s,ms,u,ns]. For example, get epoch in seconds with:
+influxdb中所有的数据都是以UTC存储的，默认情况下，请求的时间戳都以RFC3339 UTC 纳秒精度 的格式返回，例如2015-08-04T19:05:14.318570484Z。
+如果你想使用Unix格式，那么你的请求格式应该包含epoch=[h,m,s,ms,u,ns]。例如：
+curl -G 'http://localhost:8086/query' --data-urlencode "db=mydb" --data-urlencode "epoch=s" --data-urlencode "q=SELECT \"value\" FROM \"cpu_load_short\" WHERE \"region\"='us-west'"
+
+Letter	Meaning
+ns	nanoseconds
+u or µ	microseconds
+ms	milliseconds
+s	seconds
+m	minutes
+h	hours
+d	days
+w	weeks
+最后发现在查询的时候使用TimeUnit.MILLISECONDS，就可以了。否则默认是UTC
+influxDB.query(query, TimeUnit.MILLISECONDS);

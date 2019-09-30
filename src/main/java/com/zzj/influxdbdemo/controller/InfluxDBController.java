@@ -1,9 +1,14 @@
 package com.zzj.influxdbdemo.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.sun.org.apache.xpath.internal.SourceTree;
 import com.zzj.influxdbdemo.config.InfluxDBConfig;
 import com.zzj.influxdbdemo.entity.TrackPoint;
+import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
@@ -15,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/influx")
@@ -42,7 +49,8 @@ public class InfluxDBController {
         String sql = "select * from trackpoint";
         Query query = new Query(sql,"testdb");
         influxDB.setLogLevel(InfluxDB.LogLevel.BASIC);
-        QueryResult queryResult = influxDB.query(query);
+        //毫秒输出
+        QueryResult queryResult = influxDB.query(query, TimeUnit.MILLISECONDS);
         List<QueryResult.Result> resultList =  queryResult.getResults();
 
         String sss = queryResult.toString();
@@ -85,5 +93,37 @@ public class InfluxDBController {
         }
 
         return trackPoints.toString();
+    }
+    @GetMapping("/insert")
+    public void insert(){
+        TrackPoint trackPoint = new TrackPoint();
+        trackPoint.setCpuid("666");
+        trackPoint.setCputype("F");
+        trackPoint.setLat(12.335555f);
+        trackPoint.setLon(55.125011f);
+        trackPoint.setState("on");
+        Map<String,Object> bean = new HashMap();
+        try {
+            //BeanUtils.describe(trackPoint);//这个只能转String,String 不符合要求
+            //这个转换也不符合要求，因为转换map过程中，字段类型发生变化，在后面写入influx中，会变成创建新的filed 或者 直接出错。
+            //可以自写反射
+            String jsonString = JSON.toJSONString(trackPoint);
+            bean = JSON.parseObject(jsonString);
+            Point po = Point.measurement("trackpoint").fields(bean).build();
+            //influxDB.setDatabase("testdb").write(po);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //一种
+        Point.Builder builder = Point.measurement("trackpoint");
+        builder.time(System.currentTimeMillis(),TimeUnit.MICROSECONDS);
+        builder.addField("lat",12.441234f);
+        builder.addField("lon",56.512399f);
+        builder.addField("state","off");
+        builder.tag("cpuid","666888");
+        builder.tag("cputype","F");
+        Point point = builder.build();
+        influxDB.setDatabase("testdb").write(point);
     }
 }

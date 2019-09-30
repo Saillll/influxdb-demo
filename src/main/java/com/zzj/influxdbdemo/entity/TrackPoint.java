@@ -15,7 +15,7 @@ import org.influxdb.annotation.Measurement;
 @Measurement(name = "trackpoint")
 public class TrackPoint {
     @Column(name = "time")
-    private String time;
+    private double time;
 
     @Column(name = "cpuid",tag = true)
     private String cpuid;
@@ -24,10 +24,10 @@ public class TrackPoint {
     private String cputype;
 
     @Column(name = "lat")
-    private String lat;
+    private float lat;
 
     @Column(name = "lon")
-    private String lon;
+    private float lon;
 
     @Column(name = "state")
     private String state;
